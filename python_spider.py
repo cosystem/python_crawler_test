@@ -11,7 +11,7 @@ def get_single_item_data(item_url):
     '''function to get the room images and info in each page'''
     # get the page source and parse the code
     source_code = requests.get(item_url)
-    plain_text = source_code.text
+    plain_text = source_code.text.encode('utf-8', 'ignore')
     images_and_info = SoupStrainer(['div', {'class': 'img01'}, 'script', {'type': 'text/javascript'}])
     soup = BeautifulSoup(plain_text, "html.parser", parse_only=images_and_info)
     # get all the links for the images
@@ -27,8 +27,8 @@ def get_single_item_data(item_url):
     roominfolist = roominfo.replace(' ','').replace(',','').replace('\'','').split('\r\n')[1:-3]
     roominfolistnew = [infoitem.split(":") for infoitem in roominfolist]
     roominfodict = dict(roominfolistnew)
-    print(imglist)
     return (imglist, roominfodict)
+
 
 def get_rooms(page):
     '''function to get all the room information with specified page number'''
@@ -47,16 +47,18 @@ def get_rooms(page):
         #print(href)
         imginfotuple = get_single_item_data(href)
         allimginfolist.append(imginfotuple)
-    return allimginfolist
 
 # iterate through all pages and create thread for each page and append each thread to the infolist
-infolist = []
-for i in range(3):
+threadlist = []
+pagenumber = 1
+for i in range(1,pagenumber+1):
     thread_page = Thread(target=get_rooms, args=(i,))
     thread_page.start()
-    infolist.append(thread_page)
+    threadlist.append(thread_page)
 
-print(infolist)
+# Ensure all of the threads have finished
+for j in threadlist:
+    j.join()
 
 stop = timeit.default_timer()
 
